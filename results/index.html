@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architectural Challenges in Deep Learning - Pathology Model Depth Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 2rem 1.5rem;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.08) 0px, transparent 50%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .card-blue::before { background: var(--accent-blue); }
+    .card-red::before { background: var(--accent-red); }
+    .card-emerald::before { background: var(--accent-emerald); }
+    .card-amber::before { background: var(--accent-amber); }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+    }
+
+    .stat-value-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 0.5rem;
+    }
+
+    .val-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .val-sub {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .val-num {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .shallow-col { color: #60a5fa; }
+    .deep-col { color: #f87171; }
+
+    /* Interactive Visualizer */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+      background: rgba(17, 24, 39, 0.6);
+      padding: 0.4rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.6rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: white;
+      background: var(--accent-blue);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .image-viewer {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--glass-shadow);
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .image-viewer img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      background: white;
+    }
+
+    .fig-caption {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      text-align: left;
+      line-height: 1.5;
+      padding: 0 0.5rem;
+    }
+
+    /* Comparison Table */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--glass-shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .metric-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .code-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+    }
+
+    /* Analysis Report Cards */
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 850px) {
+      .report-grid { grid-template-columns: 1fr; }
+    }
+
+    .report-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+
+    .report-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .report-card p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .report-card ul {
+      padding-left: 1.2rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .report-card li {
+      margin-bottom: 0.4rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <span class="badge">Deep Learning Architecture Analysis</span>
+      <h1>Architectural Challenges: Network Depth in Pathology</h1>
+      <p class="subtitle">
+        Empirical evaluation of the Degradation Problem, Vanishing Gradients, and Representation Dynamics 
+        comparing a Shallow Network (2 Conv Layers) vs. a Plain Deep Network (10 Conv Layers).
+      </p>
+    </header>
+
+    <!-- Key Metrics Dashboard Cards -->
+    <div class="stats-grid">
+      <div class="stat-card card-blue">
+        <div class="stat-label">Model Parameters</div>
+        <div class="stat-value-group">
+          <div class="val-item">
+            <span class="val-sub">ShallowNet</span>
+            <span class="val-num shallow-col">38,050</span>
+          </div>
+          <div class="val-item">
+            <span class="val-sub">DeepNet</span>
+            <span class="val-num deep-col">98,178</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card card-emerald">
+        <div class="stat-label">Computational Cost (FLOPs)</div>
+        <div class="stat-value-group">
+          <div class="val-item">
+            <span class="val-sub">ShallowNet</span>
+            <span class="val-num shallow-col">13.0M</span>
+          </div>
+          <div class="val-item">
+            <span class="val-sub">DeepNet</span>
+            <span class="val-num deep-col">107.4M</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card card-amber">
+        <div class="stat-label">Convergence Speed (Epochs to 90% Acc)</div>
+        <div class="stat-value-group">
+          <div class="val-item">
+            <span class="val-sub">ShallowNet</span>
+            <span class="val-num shallow-col">1 Epoch</span>
+          </div>
+          <div class="val-item">
+            <span class="val-sub">DeepNet</span>
+            <span class="val-num deep-col">23 Epochs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card card-red">
+        <div class="stat-label">Training Time per Epoch</div>
+        <div class="stat-value-group">
+          <div class="val-item">
+            <span class="val-sub">ShallowNet</span>
+            <span class="val-num shallow-col">1.73s</span>
+          </div>
+          <div class="val-item">
+            <span class="val-sub">DeepNet</span>
+            <span class="val-num deep-col">5.68s</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visualizer Tabs & Image Viewer -->
+    <div class="section-title">
+      <span>🔬</span> Experimental Analysis & Diagnostics
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('curves', this)">1. Training & Loss Dynamics</button>
+      <button class="tab-btn" onclick="switchTab('gradients', this)">2. Vanishing Gradient Flow</button>
+      <button class="tab-btn" onclick="switchTab('representations', this)">3. Latent Space (t-SNE / PCA)</button>
+      <button class="tab-btn" onclick="switchTab('roc', this)">4. Confusion Matrix & ROC</button>
+      <button class="tab-btn" onclick="switchTab('complexity', this)">5. Model Complexity Comparison</button>
+      <button class="tab-btn" onclick="switchTab('dataset', this)">6. Pathology H&E Patches</button>
+    </div>
+
+    <div class="image-viewer">
+      <img id="main-display" src="training_validation_curves.png" alt="Experimental Visualization">
+      <p id="display-caption" class="fig-caption">
+        <strong>Training and Validation Curves:</strong> ShallowNet (blue) achieves rapid convergence within the very first epoch (79.1% &rarr; 100%). In contrast, DeepNet (red/orange) remains trapped at cross-entropy loss ~0.693 (random guessing ~50% accuracy) for 22 consecutive epochs due to severe vanishing gradients in early layers, before finally breaking out at epoch 23.
+      </p>
+    </div>
+
+    <!-- Comparative Table -->
+    <div class="section-title">
+      <span>📊</span> Quantitative Performance & Complexity Metrics
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric / Dimension</th>
+            <th>ShallowNet (2 Layers)</th>
+            <th>DeepNet (10 Layers)</th>
+            <th>Effect of Increasing Depth</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="metric-name">Hidden Conv Layers</td>
+            <td class="code-val shallow-col">2 Layers</td>
+            <td class="code-val deep-col">10 Layers</td>
+            <td>+5x Layer Depth</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Trainable Parameters</td>
+            <td class="code-val shallow-col">38,050</td>
+            <td class="code-val deep-col">98,178</td>
+            <td>+2.58x Parameter Overhead</td>
+          </tr>
+          <tr>
+            <td class="metric-name">FLOPs / MACs</td>
+            <td class="code-val shallow-col">13.04 MFLOPs</td>
+            <td class="code-val deep-col">107.41 MFLOPs</td>
+            <td>+8.24x Compute Multiplier</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Memory Footprint</td>
+            <td class="code-val shallow-col">148.6 KB</td>
+            <td class="code-val deep-col">383.5 KB</td>
+            <td>+2.58x Memory Allocation</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Epochs to Converge</td>
+            <td class="code-val shallow-col">1 - 2 Epochs</td>
+            <td class="code-val deep-col">23 - 24 Epochs</td>
+            <td>Severe Optimization Delay (22 Epoch Plateau)</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Early Layer Gradient Norm</td>
+            <td class="code-val shallow-col">~1.1 &times; 10<sup>-2</sup></td>
+            <td class="code-val deep-col">~1.0 &times; 10<sup>-4</sup></td>
+            <td>Over 50x to 100x Gradient Attenuation</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Inference Latency per Sample</td>
+            <td class="code-val shallow-col">0.54 ms</td>
+            <td class="code-val deep-col">1.61 ms</td>
+            <td>+2.97x Inference Slowdown</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Latent Silhouette Score</td>
+            <td class="code-val shallow-col">0.865</td>
+            <td class="code-val deep-col">0.884</td>
+            <td>Both form separable clusters once converged</td>
+          </tr>
+          <tr>
+            <td class="metric-name">Final Test Accuracy & F1</td>
+            <td class="code-val shallow-col">100.0% / 1.000</td>
+            <td class="code-val deep-col">100.0% / 1.000</td>
+            <td>Equivalent capacity on separable diagnostic features</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Analytical Synthesis Cards -->
+    <div class="section-title">
+      <span>🧠</span> Key Architectural Insights & Theoretical Findings
+    </div>
+
+    <div class="report-grid">
+      <div class="report-card">
+        <h3>⚡ 1. The Degradation Problem & Vanishing Gradients</h3>
+        <p>
+          As observed in our empirical logs, adding 8 additional convolutional layers to create DeepNet caused a prolonged <strong>22-epoch plateau</strong> where the model made zero learning progress (cross-entropy remained pegged at <code>ln(2) &approx; 0.693</code>).
+        </p>
+        <ul>
+          <li><strong>Mechanism:</strong> According to the chain rule, $\frac{\partial \mathcal{L}}{\partial W_1} = \frac{\partial \mathcal{L}}{\partial z_L} \prod_{l=2}^L W_l \sigma'(z_{l-1})$. In a plain 10-layer network, repeated matrix multiplications attenuate the gradient signal exponentially.</li>
+          <li><strong>Empirical Evidence:</strong> Our gradient tracking revealed Conv1 gradient norm is below $10^{-4}$, while Conv10 is above $6 \times 10^{-3}$—an attenuation exceeding 50x.</li>
+        </ul>
+      </div>
+
+      <div class="report-card">
+        <h3>📐 2. Representation Geometry & Manifold Structure</h3>
+        <p>
+          Both models eventually project the 64x64 pathology patches into a well-separated latent space in the 64-dimensional bottleneck:
+        </p>
+        <ul>
+          <li><strong>ShallowNet:</strong> Develops clean, linearly separable clusters almost immediately due to direct backpropagation from the classification head to early feature detectors.</li>
+          <li><strong>DeepNet:</strong> Stagnates during the initial phase with random representations before abruptly crystallizing once the late layers stabilize and gradients propagate backwards.</li>
+          <li><strong>PCA & t-SNE:</strong> Both models capture the nuclear crowding and glandular morphology differences between Benign and Malignant tissue.</li>
+        </ul>
+      </div>
+
+      <div class="report-card">
+        <h3>⚙️ 3. Computational Overhead vs Diagnostic Return</h3>
+        <p>
+          Increasing network depth without residual pathways incurs severe penalties without proportional accuracy gains for simple histopathology tasks:
+        </p>
+        <ul>
+          <li><strong>FLOPs Inflation:</strong> DeepNet requires 107.4 MFLOPs vs. 13.0 MFLOPs for ShallowNet (an 8.2x increase).</li>
+          <li><strong>Latency:</strong> Inference time increases from 0.54ms to 1.61ms per patch, significantly reducing throughput for whole-slide gigapixel imaging (WSI) pipelines.</li>
+          <li><strong>Energy & Training:</strong> Total training time jumped from 44.3s to 143.3s on CPU.</li>
+        </ul>
+      </div>
+
+      <div class="report-card">
+        <h3>🛠️ 4. Solutions in Modern Deep Architectures</h3>
+        <p>
+          To unlock the benefits of depth in complex pathology tasks without degradation, modern deep learning utilizes:
+        </p>
+        <ul>
+          <li><strong>Residual Shortcuts ($x + F(x)$):</strong> Preserves unimpeded identity gradient highways $\frac{\partial \mathcal{L}}{\partial x} = \frac{\partial \mathcal{L}}{\partial y} (1 + \frac{\partial F}{\partial x})$ avoiding vanishing gradients (ResNet).</li>
+          <li><strong>Normalization Layers:</strong> Batch Normalization and Layer Normalization stabilize internal covariate shift and preserve activation variances.</li>
+          <li><strong>Principled Initialization:</strong> He / Kaiming normal initialization calibrated for ReLU activations prevents variance explosion/decay.</li>
+        </ul>
+      </div>
+    </div>
+
+    <footer>
+      Antigravity Deep Learning Experiment • Histopathology Depth & Degradation Analysis • 2026
+    </footer>
+  </div>
+
+  <script>
+    const figures = {
+      curves: {
+        src: "training_validation_curves.png",
+        caption: "<strong>Training and Validation Curves:</strong> ShallowNet (blue) achieves rapid convergence within the very first epoch (79.1% &rarr; 100%). In contrast, DeepNet (red/orange) remains trapped at cross-entropy loss ~0.693 (random guessing ~50% accuracy) for 22 consecutive epochs due to severe vanishing gradients in early layers, before finally breaking out at epoch 23."
+      },
+      gradients: {
+        src: "gradient_flow_analysis.png",
+        caption: "<strong>Layer-wise Gradient Flow Analysis:</strong> Left: L2 gradient norm over training epochs across all 10 conv layers of DeepNet (log scale), showing that early layers (conv1, conv2) suffer from severe gradient attenuation compared to late layers (conv9, conv10). Right: Layer-wise average gradient norm from input to output, highlighting the 50x-100x signal decay starving early feature extractors."
+      },
+      representations: {
+        src: "latent_representations_tsne_pca.png",
+        caption: "<strong>Learned Representation Geometry:</strong> 2D PCA (top) and t-SNE (bottom) manifold projections of the 64-dimensional penultimate bottleneck representations on the test set. Both ShallowNet (Silhouette: 0.865) and DeepNet (Silhouette: 0.884) cleanly separate Benign (green) from Malignant (red) once converged, though DeepNet required 22x more training steps."
+      },
+      roc: {
+        src: "confusion_matrices_roc.png",
+        caption: "<strong>Confusion Matrices and ROC Curves:</strong> Left & Center: Confusion matrices showing perfect classification (120/120 benign, 120/120 malignant) for both models. Right: ROC curves verifying AUC = 1.000 for both architectures on the synthesized histopathology diagnostic features."
+      },
+      complexity: {
+        src: "model_complexity_comparison.png",
+        caption: "<strong>Model Complexity vs Performance:</strong> Side-by-side comparison across Parameters (38k vs 98k), Computational FLOPs (13.0M vs 107.4M), Model Size (148KB vs 383KB), and Latency (0.54ms vs 1.61ms). Demonstrates the massive resource inflation of plain depth."
+      },
+      dataset: {
+        src: "sample_pathology_patches.png",
+        caption: "<strong>Histopathology Image Dataset (H&E Staining Simulation):</strong> Class 0 (Benign) features regular glandular lumens, uniform chromatin, and low nuclear-to-cytoplasmic ratio. Class 1 (Malignant) models severe nuclear pleomorphism, hyperchromasia, high cell density, and loss of glandular architecture."
+      }
+    };
+
+    function switchTab(key, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const img = document.getElementById('main-display');
+      const cap = document.getElementById('display-caption');
+      
+      img.style.opacity = '0.4';
+      setTimeout(() => {
+        img.src = figures[key].src;
+        cap.innerHTML = figures[key].caption;
+        img.style.opacity = '1';
+      }, 120);
+    }
+  </script>
+</body>
+</html>

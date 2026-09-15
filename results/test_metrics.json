@@ -1,0 +1,106 @@
+{
+  "shallow": {
+    "model_name": "ShallowNet (2 Hidden Layers)",
+    "test_loss": 1.2524993993186702e-05,
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        120,
+        0
+      ],
+      [
+        0,
+        120
+      ]
+    ],
+    "roc_curve": {
+      "fpr": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "tpr": [
+        0.0,
+        0.5583333333333333,
+        0.625,
+        0.7,
+        0.7416666666666667,
+        0.7583333333333333,
+        0.775,
+        0.8083333333333333,
+        0.925,
+        0.9416666666666667,
+        1.0,
+        1.0
+      ]
+    },
+    "total_training_time_s": 44.32,
+    "avg_latency_ms_per_sample": 0.5422,
+    "throughput_samples_per_sec": 1844.3,
+    "complexity": {
+      "model_name": "ShallowNet (2 Hidden Layers)",
+      "total_params": 38050,
+      "trainable_params": 38050,
+      "size_kb": 148.63,
+      "macs": 6520960,
+      "flops": 13041920,
+      "flops_m": 13.04
+    }
+  },
+  "deep": {
+    "model_name": "DeepNet (10 Hidden Layers)",
+    "test_loss": 0.00011491623930245017,
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        120,
+        0
+      ],
+      [
+        0,
+        120
+      ]
+    ],
+    "roc_curve": {
+      "fpr": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "tpr": [
+        0.0,
+        1.0,
+        1.0
+      ]
+    },
+    "total_training_time_s": 143.33,
+    "avg_latency_ms_per_sample": 1.6081,
+    "throughput_samples_per_sec": 621.9,
+    "complexity": {
+      "model_name": "DeepNet (10 Hidden Layers)",
+      "total_params": 98178,
+      "trainable_params": 98178,
+      "size_kb": 383.51,
+      "macs": 53706880,
+      "flops": 107413760,
+      "flops_m": 107.41
+    }
+  }
+}
