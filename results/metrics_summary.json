@@ -10,23 +10,23 @@
     "recall": 1.0,
     "f1_score": 1.0,
     "roc_auc": 1.0,
-    "silhouette_score": 0.8646,
-    "latency_ms": 0.5422,
-    "training_time_s": 44.32
+    "silhouette_score": 0.8955,
+    "latency_ms": 9.4661,
+    "training_time_s": 9.55
   },
   "deep_net": {
     "num_hidden_layers": 10,
     "parameters": 98178,
     "flops_m": 107.41,
     "model_size_kb": 383.51,
-    "test_accuracy": 100.0,
-    "test_loss": 0.0001,
-    "precision": 1.0,
+    "test_accuracy": 40.0,
+    "test_loss": 0.6984,
+    "precision": 0.4,
     "recall": 1.0,
-    "f1_score": 1.0,
-    "roc_auc": 1.0,
-    "silhouette_score": 0.8844,
-    "latency_ms": 1.6081,
-    "training_time_s": 143.33
+    "f1_score": 0.5714,
+    "roc_auc": 0.3755,
+    "silhouette_score": 0.359,
+    "latency_ms": 14.397,
+    "training_time_s": 31.4
   }
 }

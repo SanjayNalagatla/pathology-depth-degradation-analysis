@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathology AI Depth Analysis • Interactive Presentation Dashboard</title>
+  <meta name="description" content="Empirical study of the Degradation Problem, Vanishing Gradients, and Representation Dynamics in Histopathology Deep Learning.">
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for Live Dynamic Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-logo">🔬</div>
+      <div>
+        <div class="brand-title">NeuroPath DepthLab</div>
+        <div class="brand-subtitle">Architectural Challenges in Deep Learning • Histopathology Depth Degradation Analysis</div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <div id="system-status-badge" class="status-badge status-idle">
+        <span class="status-dot"></span>
+        <span id="system-status-text">System Ready</span>
+      </div>
+      <button id="quick-run-btn" class="btn btn-secondary" onclick="triggerPreset('quick')">
+        <span>⚡</span> Quick Demo (10s)
+      </button>
+      <button id="pres-mode-btn" class="btn btn-accent" onclick="togglePresentationMode()">
+        <span>📽️</span> Presentation Deck
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tab Bar -->
+  <nav class="nav-tabs-container">
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="tab-overview" onclick="switchView('tab-overview', this)">
+        <span>📋</span> Overview & Insights
+      </button>
+      <button class="nav-tab" data-tab="tab-runner" onclick="switchView('tab-runner', this)">
+        <span>⚡</span> Live Program Runner
+      </button>
+      <button class="nav-tab" data-tab="tab-diagnostic" onclick="switchView('tab-diagnostic', this)">
+        <span>🔬</span> Interactive Tissue Lab
+      </button>
+      <button class="nav-tab" data-tab="tab-analytics" onclick="switchView('tab-analytics', this)">
+        <span>📊</span> Diagnostic Visualizer
+      </button>
+      <button class="nav-tab" data-tab="tab-slides" onclick="switchView('tab-slides', this)">
+        <span>📽️</span> Presentation Slides
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <!-- ========================================================================= -->
+    <!-- 1. OVERVIEW & INSIGHTS TAB -->
+    <!-- ========================================================================= -->
+    <section id="tab-overview" class="view-panel active">
+      
+      <!-- Key Metric Highlights Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card border-blue">
+          <div class="kpi-header">
+            <span class="kpi-title">Model Parameters</span>
+            <span class="kpi-badge">+2.58x Growth</span>
+          </div>
+          <div class="kpi-split">
+            <div class="kpi-stat">
+              <span class="kpi-lbl">ShallowNet (2L)</span>
+              <span class="kpi-val color-blue">38,050</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-stat">
+              <span class="kpi-lbl">DeepNet (10L)</span>
+              <span class="kpi-val color-red">98,178</span>
+            </div>
+          </div>
+          <div class="kpi-footer">Plain stack adds 60,128 unneeded weights</div>
+        </div>
+
+        <div class="kpi-card border-emerald">
+          <div class="kpi-header">
+            <span class="kpi-title">Compute Cost (FLOPs)</span>
+            <span class="kpi-badge badge-warning">+8.24x Compute</span>
+          </div>
+          <div class="kpi-split">
+            <div class="kpi-stat">
+              <span class="kpi-lbl">ShallowNet (2L)</span>
+              <span class="kpi-val color-emerald">13.04 M</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-stat">
+              <span class="kpi-lbl">DeepNet (10L)</span>
+              <span class="kpi-val color-red">107.41 M</span>
+            </div>
+          </div>
+          <div class="kpi-footer">Massive throughput penalty on whole-slide scans</div>
+        </div>
+
+        <div class="kpi-card border-amber">
+          <div class="kpi-header">
+            <span class="kpi-title">Convergence Speed</span>
+            <span class="kpi-badge badge-danger">22-Epoch Plateau</span>
+          </div>
+          <div class="kpi-split">
+            <div class="kpi-stat">
+              <span class="kpi-lbl">ShallowNet</span>
+              <span class="kpi-val color-blue">Epoch 1</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-stat">
+              <span class="kpi-lbl">DeepNet</span>
+              <span class="kpi-val color-amber">Epoch 23</span>
+            </div>
+          </div>
+          <div class="kpi-footer">Vanishing gradients freeze early feature learning</div>
+        </div>
+
+        <div class="kpi-card border-rose">
+          <div class="kpi-header">
+            <span class="kpi-title">Gradient Attenuation</span>
+            <span class="kpi-badge badge-danger">&gt;50x-100x Decay</span>
+          </div>
+          <div class="kpi-split">
+            <div class="kpi-stat">
+              <span class="kpi-lbl">Early (Conv1)</span>
+              <span class="kpi-val color-red">~1.0×10⁻⁴</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-stat">
+              <span class="kpi-lbl">Late (Conv10)</span>
+              <span class="kpi-val color-emerald">~6.0×10⁻³</span>
+            </div>
+          </div>
+          <div class="kpi-footer">Multiplicative derivative decay through depth</div>
+        </div>
+      </div>
+
+      <!-- Problem Statement & Architecture Comparison -->
+      <div class="content-grid-2col">
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">🔬 The Histopathology Challenge</div>
+            <span class="tag tag-info">H&E Stain Simulation</span>
+          </div>
+          <p class="text-secondary">
+            Digital histopathology relies on discerning cellular architecture, nuclear density, and nuclear pleomorphism 
+            under <strong>Hematoxylin & Eosin (H&E)</strong> staining. 
+          </p>
+          <div class="tissue-spec-box">
+            <div class="tissue-spec-item">
+              <strong class="color-emerald">Class 0 (Benign Tissue):</strong>
+              <span>Organized circular glandular lumens, uniform chromatin, low nuclear-to-cytoplasmic (N:C) ratio (~1:4), ordered connective tissue fibers.</span>
+            </div>
+            <div class="tissue-spec-item">
+              <strong class="color-red">Class 1 (Malignant Carcinoma):</strong>
+              <span>Complete loss of glandular architecture, extreme nuclear pleomorphism, hyperchromasia, high nuclear crowding (&gt;3x density).</span>
+            </div>
+          </div>
+          <p class="text-secondary mt-2">
+            <strong>Key Research Finding:</strong> While both models eventually reach 100% test accuracy on this diagnostic task, 
+            the 10-layer plain network suffers from severe <strong>optimization degradation</strong>, requiring 23x longer training and 8.2x more FLOPs with zero diagnostic gain.
+          </p>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">📐 Architectural Comparison</div>
+            <span class="tag tag-accent">Plain Feedforward Stack</span>
+          </div>
+          <div class="arch-diagrams">
+            <div class="arch-box arch-shallow">
+              <div class="arch-badge">ShallowNet (2 Conv Layers)</div>
+              <div class="arch-flow">
+                <div class="layer-pill layer-input">Input (3×64×64)</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-conv">Conv1 (16 ch, 3×3) + MaxPool</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-conv">Conv2 (32 ch, 3×3) + MaxPool</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-dense">Dense Bottleneck (64-dim)</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-output">Logits (2 classes)</div>
+              </div>
+              <div class="arch-note color-blue">Direct gradient highway back to early filters</div>
+            </div>
+
+            <div class="arch-box arch-deep">
+              <div class="arch-badge">DeepNet (10 Conv Layers)</div>
+              <div class="arch-flow">
+                <div class="layer-pill layer-input">Input (3×64×64)</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-conv-stacked">Conv1 → Conv2 → Conv3 (16 ch)</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-conv-stacked">Conv4 → Conv5 → Conv6 (32 ch)</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-conv-stacked">Conv7 → Conv8 → Conv9 → Conv10</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-dense">Dense Bottleneck (64-dim)</div>
+                <div class="flow-arrow">↓</div>
+                <div class="layer-pill layer-output">Logits (2 classes)</div>
+              </div>
+              <div class="arch-note color-red">Attenuates gradients exponentially across 10 layers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quantitative Comparison Table -->
+      <div class="card glass-card mt-3">
+        <div class="card-header">
+          <div class="card-title">📊 Empirical Benchmark Summary</div>
+          <button class="btn btn-sm btn-secondary" onclick="loadMetrics()">↻ Refresh Benchmark Data</button>
+        </div>
+        <div class="table-responsive">
+          <table class="benchmark-table">
+            <thead>
+              <tr>
+                <th>Evaluation Metric / Dimension</th>
+                <th>ShallowNet (2 Layers)</th>
+                <th>DeepNet (10 Layers)</th>
+                <th>Impact of Depth</th>
+                <th>Clinical Interpretation</th>
+              </tr>
+            </thead>
+            <tbody id="metrics-table-body">
+              <tr>
+                <td><strong>Hidden Conv Layers</strong></td>
+                <td class="color-blue font-mono">2 Layers</td>
+                <td class="color-red font-mono">10 Layers</td>
+                <td><span class="tag tag-neutral">+5x Depth</span></td>
+                <td>Substantial architectural elongation</td>
+              </tr>
+              <tr>
+                <td><strong>Trainable Parameters</strong></td>
+                <td class="color-blue font-mono">38,050</td>
+                <td class="color-red font-mono">98,178</td>
+                <td><span class="tag tag-warning">+2.58x Overhead</span></td>
+                <td>Increased risk of overfitting without regularization</td>
+              </tr>
+              <tr>
+                <td><strong>Computational FLOPs</strong></td>
+                <td class="color-blue font-mono">13.04 MFLOPs</td>
+                <td class="color-red font-mono">107.41 MFLOPs</td>
+                <td><span class="tag tag-danger">+8.24x Compute</span></td>
+                <td>8x higher GPU energy / deployment infrastructure</td>
+              </tr>
+              <tr>
+                <td><strong>Inference Latency per Patch</strong></td>
+                <td class="color-blue font-mono">0.54 ms</td>
+                <td class="color-red font-mono">1.61 ms</td>
+                <td><span class="tag tag-danger">+2.97x Slower</span></td>
+                <td>Critical bottleneck for 100k+ patch whole-slide scans</td>
+              </tr>
+              <tr>
+                <td><strong>Convergence Speed</strong></td>
+                <td class="color-blue font-mono">1 Epoch</td>
+                <td class="color-red font-mono">23 Epochs</td>
+                <td><span class="tag tag-danger">22-Epoch Plateau</span></td>
+                <td>Degradation problem: stuck at cross-entropy ln(2)≈0.693</td>
+              </tr>
+              <tr>
+                <td><strong>Conv1 Gradient Norm</strong></td>
+                <td class="color-blue font-mono">~1.1 × 10⁻²</td>
+                <td class="color-red font-mono">~1.0 × 10⁻⁴</td>
+                <td><span class="tag tag-danger">&gt;50x Decay</span></td>
+                <td>Severe vanishing gradient starves early filters</td>
+              </tr>
+              <tr>
+                <td><strong>Latent Silhouette Score</strong></td>
+                <td class="color-blue font-mono">0.865</td>
+                <td class="color-red font-mono">0.884</td>
+                <td><span class="tag tag-success">Equivalent</span></td>
+                <td>Both form separable clusters once converged</td>
+              </tr>
+              <tr>
+                <td><strong>Test Accuracy & F1-Score</strong></td>
+                <td class="color-blue font-mono">100.0% / 1.000</td>
+                <td class="color-red font-mono">100.0% / 1.000</td>
+                <td><span class="tag tag-neutral">0% Gain</span></td>
+                <td>Depth yields zero diagnostic improvement on this task</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 2. LIVE EXPERIMENT RUNNER TAB -->
+    <!-- ========================================================================= -->
+    <section id="tab-runner" class="view-panel">
+      <div class="runner-header-card card glass-card">
+        <div class="runner-controls">
+          <div>
+            <h2 class="section-heading">⚡ Live Experiment Execution Console</h2>
+            <p class="text-secondary">
+              Run the PyTorch training pipeline live from your browser, stream real-time epoch metrics via Server-Sent Events,
+              and watch the degradation plateau unfold.
+            </p>
+          </div>
+          <div class="preset-group">
+            <span class="preset-label">Presets:</span>
+            <button class="btn btn-sm btn-preset active" onclick="setPreset('quick')">10s Demo (5 Ep)</button>
+            <button class="btn btn-sm btn-preset" onclick="setPreset('standard')">Standard (15 Ep)</button>
+            <button class="btn btn-sm btn-preset" onclick="setPreset('full')">Full Plateau (25 Ep)</button>
+          </div>
+        </div>
+
+        <!-- Hyperparameter Form -->
+        <div class="param-grid mt-2">
+          <div class="param-field">
+            <label for="param-epochs">Epochs</label>
+            <input type="number" id="param-epochs" value="5" min="1" max="50">
+          </div>
+          <div class="param-field">
+            <label for="param-samples">Dataset Samples</label>
+            <input type="number" id="param-samples" value="400" min="100" max="3000" step="100">
+          </div>
+          <div class="param-field">
+            <label for="param-lr">Learning Rate (SGD)</label>
+            <input type="number" id="param-lr" value="0.02" min="0.001" max="0.5" step="0.005">
+          </div>
+          <div class="param-field">
+            <label for="param-batch">Batch Size</label>
+            <input type="number" id="param-batch" value="32" min="8" max="128" step="8">
+          </div>
+          <div class="param-field flex-end">
+            <button id="run-btn" class="btn btn-primary btn-block" onclick="startExperiment()">
+              <span id="run-btn-icon">▶</span> <span id="run-btn-label">Run Experiment Live</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Progress Indicator -->
+        <div id="progress-container" class="progress-wrapper mt-3" style="display: none;">
+          <div class="progress-labels">
+            <span id="progress-phase" class="font-mono">Training in progress...</span>
+            <span id="progress-percent" class="font-mono">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Grid: Live Chart + Live Terminal -->
+      <div class="content-grid-2col mt-3">
+        
+        <!-- Live Real-Time Chart -->
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">📈 Real-Time Optimization Trajectory</div>
+            <div class="chart-toggles">
+              <span class="legend-badge legend-shallow">ShallowNet</span>
+              <span class="legend-badge legend-deep">DeepNet</span>
+            </div>
+          </div>
+          <div class="chart-container" style="position: relative; height: 320px;">
+            <canvas id="live-training-chart"></canvas>
+          </div>
+          <div class="card-footer text-muted font-mono" id="live-chart-footer">
+            Watching for epoch events...
+          </div>
+        </div>
+
+        <!-- Live Streaming Terminal Output -->
+        <div class="card glass-card terminal-card">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <div class="terminal-title">live_stdout.log • PyTorch Engine</div>
+            <button class="btn btn-sm btn-icon" title="Clear Console" onclick="clearTerminal()">⌫ Clear</button>
+          </div>
+          <div id="terminal-body" class="terminal-body font-mono">
+            <div class="term-line term-system">[System] Engine connected. Click "Run Experiment Live" or select a preset to begin.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 3. INTERACTIVE TISSUE DIAGNOSTIC LAB TAB -->
+    <!-- ========================================================================= -->
+    <section id="tab-diagnostic" class="view-panel">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div>
+            <h2 class="section-heading">🔬 Live Histopathology Diagnostic Playground</h2>
+            <p class="text-secondary">
+              Generate synthetic H&E pathology tissue patches on-the-fly and pass them simultaneously through 
+              both <strong>ShallowNet</strong> and <strong>DeepNet</strong> to compare predictions, confidence scores, and real-time inference latency.
+            </p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="runDiagnosis(0)">
+              <span class="color-emerald">●</span> Generate Benign Patch
+            </button>
+            <button class="btn btn-secondary" onclick="runDiagnosis(1)">
+              <span class="color-red">●</span> Generate Malignant Patch
+            </button>
+            <button class="btn btn-primary" onclick="runDiagnosis(null)">
+              <span>🎲</span> Random Tissue Sample
+            </button>
+          </div>
+        </div>
+
+        <div class="diagnostic-grid mt-3">
+          
+          <!-- Sample Patch View & Biological Features -->
+          <div class="patch-card">
+            <div class="patch-header">
+              <span class="font-mono text-muted">H&E Stain Patch (64×64)</span>
+              <span id="patch-ground-truth" class="tag tag-neutral">Awaiting sample</span>
+            </div>
+            <div class="patch-image-wrapper">
+              <img id="diagnostic-patch-img" src="/results/sample_pathology_patches.png" alt="Pathology Tissue Patch" class="patch-img-display">
+              <div id="patch-scan-line" class="scan-line" style="display: none;"></div>
+            </div>
+            <div class="morphology-box mt-2">
+              <div class="morph-title" id="morph-title">Biological Cellular Characteristics</div>
+              <ul class="morph-list" id="morph-list">
+                <li><strong>Glandular Lumen:</strong> Click one of the buttons above to synthesize a patch.</li>
+                <li><strong>Nuclear Density:</strong> Compares chromatin size & nuclear-to-cytoplasmic ratio.</li>
+                <li><strong>Staining:</strong> Hematoxylin (nuclei, dark purple) & Eosin (stroma, pink).</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Dual Model Prediction & Latency Comparison -->
+          <div class="models-inference-container">
+            
+            <!-- ShallowNet Card -->
+            <div class="model-infer-card shallow-infer-card">
+              <div class="infer-card-header">
+                <div>
+                  <div class="infer-model-name color-blue">ShallowNet (2 Conv Layers)</div>
+                  <div class="infer-model-sub">38.0k params • 13.0M FLOPs</div>
+                </div>
+                <div id="shallow-pred-badge" class="pred-badge badge-idle">Ready</div>
+              </div>
+              <div class="infer-body">
+                <div class="confidence-section">
+                  <div class="conf-labels">
+                    <span>Benign Probability</span>
+                    <span id="shallow-prob-benign" class="font-mono">50.0%</span>
+                  </div>
+                  <div class="conf-bar-bg">
+                    <div id="shallow-bar-benign" class="conf-bar-fill bar-benign" style="width: 50%;"></div>
+                  </div>
+                </div>
+                <div class="confidence-section mt-1">
+                  <div class="conf-labels">
+                    <span>Malignant Probability</span>
+                    <span id="shallow-prob-malignant" class="font-mono">50.0%</span>
+                  </div>
+                  <div class="conf-bar-bg">
+                    <div id="shallow-bar-malignant" class="conf-bar-fill bar-malignant" style="width: 50%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="infer-footer">
+                <span class="infer-metric-lbl">Inference Latency:</span>
+                <span id="shallow-latency" class="infer-latency-val color-blue font-mono">-- ms</span>
+              </div>
+            </div>
+
+            <!-- DeepNet Card -->
+            <div class="model-infer-card deep-infer-card">
+              <div class="infer-card-header">
+                <div>
+                  <div class="infer-model-name color-red">DeepNet (10 Conv Layers)</div>
+                  <div class="infer-model-sub">98.2k params • 107.4M FLOPs</div>
+                </div>
+                <div id="deep-pred-badge" class="pred-badge badge-idle">Ready</div>
+              </div>
+              <div class="infer-body">
+                <div class="confidence-section">
+                  <div class="conf-labels">
+                    <span>Benign Probability</span>
+                    <span id="deep-prob-benign" class="font-mono">50.0%</span>
+                  </div>
+                  <div class="conf-bar-bg">
+                    <div id="deep-bar-benign" class="conf-bar-fill bar-benign" style="width: 50%;"></div>
+                  </div>
+                </div>
+                <div class="confidence-section mt-1">
+                  <div class="conf-labels">
+                    <span>Malignant Probability</span>
+                    <span id="deep-prob-malignant" class="font-mono">50.0%</span>
+                  </div>
+                  <div class="conf-bar-bg">
+                    <div id="deep-bar-malignant" class="conf-bar-fill bar-malignant" style="width: 50%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="infer-footer">
+                <span class="infer-metric-lbl">Inference Latency:</span>
+                <span id="deep-latency" class="infer-latency-val color-red font-mono">-- ms</span>
+              </div>
+            </div>
+
+            <!-- Speedup Summary Callout -->
+            <div class="callout-card">
+              <div class="callout-icon">⚡</div>
+              <div class="callout-content">
+                <div class="callout-title" id="speedup-title">ShallowNet is ~3.0x Faster at Inference</div>
+                <div class="callout-text" id="speedup-desc">
+                  With equal 100% diagnostic accuracy, DeepNet incurs unnecessary latency and computational inflation.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 4. DEEP DIVE ANALYTICS TAB -->
+    <!-- ========================================================================= -->
+    <section id="tab-analytics" class="view-panel">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div>
+            <h2 class="section-heading">📊 Experimental Diagnostics & Visualizations</h2>
+            <p class="text-secondary">Comprehensive empirical evidence documenting optimization plateau, gradient decay, and representation geometry.</p>
+          </div>
+          <div class="visualizer-tabs">
+            <button class="vis-tab active" onclick="switchVisualizerTab('curves', this)">1. Loss & Accuracy</button>
+            <button class="vis-tab" onclick="switchVisualizerTab('gradients', this)">2. Gradient Flow</button>
+            <button class="vis-tab" onclick="switchVisualizerTab('representations', this)">3. t-SNE & PCA</button>
+            <button class="vis-tab" onclick="switchVisualizerTab('roc', this)">4. Confusion Matrix</button>
+            <button class="vis-tab" onclick="switchVisualizerTab('complexity', this)">5. Model Complexity</button>
+            <button class="vis-tab" onclick="switchVisualizerTab('dataset', this)">6. H&E Patches</button>
+          </div>
+        </div>
+
+        <div class="analytics-viewer-container mt-2">
+          <div class="analytics-image-card">
+            <img id="analytics-display-img" src="/results/training_validation_curves.png" alt="Diagnostic Plot" class="analytics-main-img">
+          </div>
+          <div class="analytics-explanation-card">
+            <h3 id="analytics-caption-title" class="analytics-title">Training & Validation Dynamics</h3>
+            <p id="analytics-caption-body" class="analytics-body">
+              <strong>The Degradation Phenomenon:</strong> ShallowNet converges within the very first epoch, attaining 100% validation accuracy. 
+              In sharp contrast, DeepNet remains trapped at cross-entropy loss $\mathcal{L} \approx \ln(2) \approx 0.693$ 
+              (theoretical loss of random guessing, 50% accuracy) for 22 consecutive epochs before vanishing gradients are overcome.
+            </p>
+            <div class="analytics-takeaways mt-2">
+              <div class="takeaway-item">
+                <span class="takeaway-bullet">✓</span>
+                <span><strong>Mathematical Cause:</strong> Error signal decays multiplicatively $\prod_{l=2}^L W_l^T \sigma'(z_{l-1})$.</span>
+              </div>
+              <div class="takeaway-item">
+                <span class="takeaway-bullet">✓</span>
+                <span><strong>Optimization Failure:</strong> Proves deeper plain networks fail due to optimization hurdles, not overfitting.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 5. PRESENTATION SLIDES TAB -->
+    <!-- ========================================================================= -->
+    <section id="tab-slides" class="view-panel">
+      <div class="slides-controller card glass-card">
+        <div class="slides-header">
+          <div>
+            <span class="badge badge-accent">Presentation Deck</span>
+            <h2 class="slide-main-title">Pathology Depth Degradation Analysis</h2>
+          </div>
+          <div class="slides-nav-controls">
+            <button class="btn btn-secondary btn-sm" onclick="prevSlide()">◀ Previous</button>
+            <span id="slide-indicator" class="font-mono text-muted">Slide 1 of 10</span>
+            <button class="btn btn-primary btn-sm" onclick="nextSlide()">Next ▶</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleFullscreenDeck()">⛶ Fullscreen</button>
+          </div>
+        </div>
+
+        <!-- Slide Deck Container -->
+        <div id="deck-wrapper" class="deck-wrapper">
+          
+          <!-- Slide 1 -->
+          <div class="slide active" data-slide="1">
+            <div class="slide-content">
+              <span class="slide-tag">Executive Summary</span>
+              <h1 class="slide-h1">Architectural Challenges in Deep Learning</h1>
+              <h3 class="slide-h3 color-blue">The Degradation Problem & Vanishing Gradients in Pathology Networks</h3>
+              <div class="slide-body mt-3">
+                <p>When increasing neural network depth in digital histopathology without specialized architectural interventions, deep plain models face critical optimization barriers:</p>
+                <div class="slide-cards-3col mt-2">
+                  <div class="slide-mini-card">
+                    <div class="mini-icon">📉</div>
+                    <h4>1. Optimization Plateau</h4>
+                    <p>DeepNet is trapped for 22 epochs at cross-entropy loss ~0.693 (random guessing) before converging.</p>
+                  </div>
+                  <div class="slide-mini-card">
+                    <div class="mini-icon">⚡</div>
+                    <h4>2. Vanishing Gradients</h4>
+                    <p>Early layers experience &gt;50x to 100x gradient decay compared to output layers, starving feature learning.</p>
+                  </div>
+                  <div class="slide-mini-card">
+                    <div class="mini-icon">💸</div>
+                    <h4>3. Resource Inflation</h4>
+                    <p>+8.2x computational FLOPs and +2.97x latency penalty with zero diagnostic return on separable features.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 2 -->
+          <div class="slide" data-slide="2">
+            <div class="slide-content">
+              <span class="slide-tag">Mathematical Theory</span>
+              <h2 class="slide-h1">Why Do Gradients Vanish Across Depth?</h2>
+              <div class="slide-body mt-2">
+                <p>Under backpropagation via the chain rule, the gradient of the loss with respect to early weights $W_1$ is:</p>
+                <div class="math-box font-mono mt-2">
+                  $$\frac{\partial \mathcal{L}}{\partial W_1} = \frac{\partial \mathcal{L}}{\partial z_L} \cdot \left( \prod_{l=2}^L W_l^T \cdot \text{diag}(\sigma'(z_{l-1})) \right) \cdot \frac{\partial z_1}{\partial W_1}$$
+                </div>
+                <div class="slide-grid-2col mt-3">
+                  <div class="slide-mini-card">
+                    <h4>Multiplicative Chain of Jacobians</h4>
+                    <p>If weight magnitudes or activation derivatives $\sigma'(z) \le 1$, the product of $L-1$ matrices decays exponentially toward zero ($0.5^{10} \approx 0.00097$).</p>
+                  </div>
+                  <div class="slide-mini-card">
+                    <h4>Empirical Decay in Our Network</h4>
+                    <p>In DeepNet (10 Conv layers), Conv1 norm is $\sim 1.0 \times 10^{-4}$, while Conv10 norm is $\sim 6.0 \times 10^{-3}$—starving early edge/nuclear texture detectors.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 3 -->
+          <div class="slide" data-slide="3">
+            <div class="slide-content">
+              <span class="slide-tag">Dataset & Domain</span>
+              <h2 class="slide-h1">Histopathology H&E Patch Synthesis</h2>
+              <div class="slide-grid-2col mt-2">
+                <div>
+                  <img src="/results/sample_pathology_patches.png" alt="Patches" class="slide-img">
+                </div>
+                <div class="slide-bullet-list">
+                  <div class="bullet-box">
+                    <h4 class="color-emerald">Class 0: Benign Histopathology</h4>
+                    <p>Regular glandular lumen architecture, organized basal nuclei, low N:C ratio (~1:4), uniform chromatin.</p>
+                  </div>
+                  <div class="bullet-box mt-2">
+                    <h4 class="color-red">Class 1: Malignant Invasive Carcinoma</h4>
+                    <p>Severe nuclear pleomorphism, hyperchromatic enlarged nuclei, loss of lumen structure, extreme cellular crowding.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 4 -->
+          <div class="slide" data-slide="4">
+            <div class="slide-content">
+              <span class="slide-tag">Experimental Finding #1</span>
+              <h2 class="slide-h1">The 22-Epoch Degradation Plateau</h2>
+              <div class="slide-grid-2col mt-2">
+                <div>
+                  <img src="/results/training_validation_curves.png" alt="Training Curves" class="slide-img">
+                </div>
+                <div>
+                  <div class="bullet-box">
+                    <h4 class="color-blue">ShallowNet (2 Layers)</h4>
+                    <p>Converges in <strong>Epoch 1</strong> ($79.1\% \to 100\%$), loss drops to $0.000$ by Epoch 2.</p>
+                  </div>
+                  <div class="bullet-box mt-2">
+                    <h4 class="color-red">DeepNet (10 Layers)</h4>
+                    <p>Remains trapped for <strong>22 consecutive epochs</strong> at loss $\approx 0.693$ (50% random guessing) before late layers backpropagate enough signal to escape.</p>
+                  </div>
+                  <p class="mt-2 text-secondary"><strong>Takeaway:</strong> Adding depth without skip connections severely degrades optimizability, even on clean separable data.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 5 -->
+          <div class="slide" data-slide="5">
+            <div class="slide-content">
+              <span class="slide-tag">Experimental Finding #2</span>
+              <h2 class="slide-h1">Layer-wise Vanishing Gradient Dynamics</h2>
+              <div class="slide-grid-2col mt-2">
+                <div>
+                  <img src="/results/gradient_flow_analysis.png" alt="Gradient Flow" class="slide-img">
+                </div>
+                <div>
+                  <div class="bullet-box">
+                    <h4>Direct Layer Tracking Evidence</h4>
+                    <p>Tracking the Frobenius norm $\|\nabla_{W_l} \mathcal{L}\|_2$ during backpropagation confirms that early layers are starved of learning updates.</p>
+                  </div>
+                  <div class="bullet-box mt-2">
+                    <h4 class="color-amber">&gt;50x to 100x Gradient Attenuation</h4>
+                    <p>Conv1 gradient norm remains below $1.0 \times 10^{-4}$ while late Conv10 exceeds $6.0 \times 10^{-3}$.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 6 -->
+          <div class="slide" data-slide="6">
+            <div class="slide-content">
+              <span class="slide-tag">Experimental Finding #3</span>
+              <h2 class="slide-h1">Learned Representation Geometry (PCA & t-SNE)</h2>
+              <div class="slide-grid-2col mt-2">
+                <div>
+                  <img src="/results/latent_representations_tsne_pca.png" alt="Latent Space" class="slide-img">
+                </div>
+                <div>
+                  <div class="bullet-box">
+                    <h4>Identical Asymptotic Cluster Geometry</h4>
+                    <p>Once converged, both models project 64x64 patches into linearly separable latent clusters (Silhouette score <strong>0.865 vs 0.884</strong>).</p>
+                  </div>
+                  <div class="bullet-box mt-2">
+                    <h4>Optimization Barrier vs Capacity</h4>
+                    <p>Both models possess sufficient capacity to solve the task. The failure in DeepNet is purely an <strong>optimization barrier</strong>, not a statistical representation limitation.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 7 -->
+          <div class="slide" data-slide="7">
+            <div class="slide-content">
+              <span class="slide-tag">Experimental Finding #4</span>
+              <h2 class="slide-h1">Resource Inflation vs Diagnostic Return</h2>
+              <div class="slide-grid-2col mt-2">
+                <div>
+                  <img src="/results/model_complexity_comparison.png" alt="Complexity" class="slide-img">
+                </div>
+                <div>
+                  <div class="bullet-box">
+                    <h4>FLOPs Inflation: +8.24x</h4>
+                    <p>DeepNet requires 107.4 MFLOPs vs 13.0 MFLOPs for ShallowNet.</p>
+                  </div>
+                  <div class="bullet-box mt-2">
+                    <h4>Inference Latency: +2.97x Slower</h4>
+                    <p>0.54ms vs 1.61ms per patch. In a whole-slide image with 100,000 patches, this adds hours of processing delay!</p>
+                  </div>
+                  <div class="bullet-box mt-2">
+                    <h4 class="color-emerald">Diagnostic Return: 0%</h4>
+                    <p>Both models achieve 100.0% test accuracy and AUC = 1.000.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 8 -->
+          <div class="slide" data-slide="8">
+            <div class="slide-content">
+              <span class="slide-tag">Modern Solutions</span>
+              <h2 class="slide-h1">Modern Architectural Remedies</h2>
+              <div class="slide-cards-3col mt-3">
+                <div class="slide-mini-card">
+                  <div class="mini-icon">⚡</div>
+                  <h4>1. Residual Connections ($y = F(x) + x$)</h4>
+                  <p>Identity shortcuts preserve an uninterrupted gradient highway: $\frac{\partial \mathcal{L}}{\partial x} = \frac{\partial \mathcal{L}}{\partial y}(1 + \frac{\partial F}{\partial x})$.</p>
+                </div>
+                <div class="slide-mini-card">
+                  <div class="mini-icon">⚖️</div>
+                  <h4>2. Normalization Layers</h4>
+                  <p>Batch Normalization and Layer Normalization stabilize internal covariate shift and maintain activation variances.</p>
+                </div>
+                <div class="slide-mini-card">
+                  <div class="mini-icon">🎯</div>
+                  <h4>3. Principled Initialization</h4>
+                  <p>He / Kaiming normal initialization calibrated for ReLU activations ($\text{Var}(W) = 2/n_{in}$) prevents signal decay.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 9 -->
+          <div class="slide" data-slide="9">
+            <div class="slide-content">
+              <span class="slide-tag">Summary & Guidelines</span>
+              <h2 class="slide-h1">Clinical Engineering Recommendations</h2>
+              <div class="slide-bullet-list mt-3">
+                <div class="bullet-box">
+                  <strong class="color-blue">1. Right-size Model Depth:</strong> Avoid blindly stacking plain convolutional layers for histological tasks where lower-order texture features suffice.
+                </div>
+                <div class="bullet-box mt-2">
+                  <strong class="color-emerald">2. Mandatory Skip Connections:</strong> If deep architectures are necessary for multiscale context, always employ residual highways (ResNet/ConvNeXt).
+                </div>
+                <div class="bullet-box mt-2">
+                  <strong class="color-amber">3. Profile Clinical Whole-Slide Latency:</strong> Always measure throughput in patches/sec, as computational inflation multiplies dramatically across gigapixel WSIs.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 10 -->
+          <div class="slide" data-slide="10">
+            <div class="slide-content text-center">
+              <span class="slide-tag">Conclusion</span>
+              <h1 class="slide-h1 mt-2">Thank You! Questions & Discussion</h1>
+              <p class="slide-h3 color-blue mt-2">Interactive Dashboard Live Demonstration</p>
+              <div class="mt-4">
+                <button class="btn btn-primary" onclick="switchView('tab-runner')">⚡ Switch to Live Experiment Runner</button>
+                <button class="btn btn-secondary ml-2" onclick="switchView('tab-diagnostic')">🔬 Open Diagnostic Lab</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Slide Progress Bar -->
+        <div class="slide-progress-bar">
+          <div id="slide-progress-fill" class="slide-progress-fill" style="width: 10%;"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div>Pathology Depth Degradation Analysis • Neural Architecture Research Dashboard • 2026</div>
+    <div class="footer-shortcuts font-mono">
+      <span>Shortcuts:</span> <code>[P]</code> Presentation Mode • <code>[←/→]</code> Slide Nav • <code>[Esc]</code> Exit
+    </div>
+  </footer>
+
+  <!-- App Script -->
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

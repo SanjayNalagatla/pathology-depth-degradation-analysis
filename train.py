@@ -6,6 +6,7 @@ Records:
 - Layer-wise gradient norm dynamics across depth
 - Detailed test metrics (Accuracy, Precision, Recall, F1, ROC-AUC, Confusion Matrix)
 - Latent feature embeddings for manifold visualization
+Supports progress and log streaming callbacks for real-time dashboard execution.
 """
 
 import os
@@ -21,10 +22,17 @@ from dataset import get_data_loaders
 from models import ShallowPathologyNet, DeepPathologyNet, calculate_model_complexity
 
 def train_and_evaluate_model(model, train_loader, val_loader, test_loader, 
-                             epochs=25, lr=0.01, device='cpu'):
+                             epochs=25, lr=0.01, device='cpu',
+                             progress_callback=None, log_callback=None):
     """
     Train a model while tracking layer-wise gradient norms and evaluation metrics.
+    Supports progress and log callbacks for real-time dashboard updates.
     """
+    def emit_log(msg):
+        print(msg)
+        if log_callback:
+            log_callback(msg)
+
     model.to(device)
     criterion = nn.CrossEntropyLoss()
     # Standard SGD with momentum highlights depth optimization dynamics clearly
@@ -44,10 +52,10 @@ def train_and_evaluate_model(model, train_loader, val_loader, test_loader,
     for layer in weight_layers:
         history["layer_gradient_norms"][layer] = []
         
-    print(f"\n==========================================")
-    print(f"Starting Training: {model.name}")
-    print(f"Epochs: {epochs} | LR: {lr} | Device: {device}")
-    print(f"==========================================")
+    emit_log(f"\n==========================================")
+    emit_log(f"Starting Training: {model.name}")
+    emit_log(f"Epochs: {epochs} | LR: {lr} | Device: {device}")
+    emit_log(f"==========================================")
     
     total_start_time = time.time()
     
@@ -116,14 +124,28 @@ def train_and_evaluate_model(model, train_loader, val_loader, test_loader,
         history["val_acc"].append(float(val_acc))
         history["epoch_times"].append(float(epoch_duration))
         
-        if epoch % 5 == 0 or epoch == 1 or epoch == epochs:
-            print(f"Epoch [{epoch:02d}/{epochs:02d}] "
-                  f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc*100:.2f}% | "
-                  f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | "
-                  f"Time: {epoch_duration:.2f}s")
+        epoch_msg = (f"[{model.name}] Epoch [{epoch:02d}/{epochs:02d}] "
+                     f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc*100:.2f}% | "
+                     f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | "
+                     f"Time: {epoch_duration:.2f}s")
+        emit_log(epoch_msg)
+        
+        if progress_callback:
+            progress_callback({
+                "type": "epoch",
+                "model": model.name,
+                "model_key": "shallow" if "Shallow" in model.name else "deep",
+                "epoch": epoch,
+                "total_epochs": epochs,
+                "train_loss": float(train_loss),
+                "train_acc": float(train_acc),
+                "val_loss": float(val_loss),
+                "val_acc": float(val_acc),
+                "epoch_duration": float(epoch_duration)
+            })
             
     total_training_time = time.time() - total_start_time
-    print(f"Training completed in {total_training_time:.2f}s")
+    emit_log(f"Training of {model.name} completed in {total_training_time:.2f}s")
     
     # Test Evaluation
     model.eval()
@@ -176,6 +198,11 @@ def train_and_evaluate_model(model, train_loader, val_loader, test_loader,
     
     complexity = calculate_model_complexity(model)
     
+    emit_log(f"\nEvaluation Results: {model.name}")
+    emit_log(f"Test Accuracy: {accuracy*100:.2f}% | Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | ROC-AUC: {roc_auc:.4f}")
+    emit_log(f"Avg Inference Latency: {avg_latency_ms:.4f} ms | Throughput: {throughput:.1f} samples/sec")
+    emit_log(f"Parameters: {complexity['trainable_params']:,} | FLOPs: {complexity['flops_m']:.2f} M | Size: {complexity['size_kb']:.2f} KB")
+    
     test_metrics = {
         "model_name": model.name,
         "test_loss": float(test_loss),
@@ -197,10 +224,17 @@ def train_and_evaluate_model(model, train_loader, val_loader, test_loader,
     
     return history, test_metrics, all_latents, all_labels
 
-def run_experiment(num_samples=1600, epochs=25, batch_size=32, lr=0.01):
+def run_experiment(num_samples=1600, epochs=25, batch_size=32, lr=0.01, device=None,
+                   progress_callback=None, log_callback=None):
+    def emit_log(msg):
+        print(msg)
+        if log_callback:
+            log_callback(msg)
+
     os.makedirs("results", exist_ok=True)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print(f"Running experiment on device: {device}")
+    if device is None:
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    emit_log(f"Running experiment on device: {device} | Samples: {num_samples} | Epochs: {epochs} | LR: {lr}")
     
     train_loader, val_loader, test_loader = get_data_loaders(num_samples=num_samples, batch_size=batch_size)
     
@@ -209,19 +243,23 @@ def run_experiment(num_samples=1600, epochs=25, batch_size=32, lr=0.01):
     deep_net = DeepPathologyNet()
     
     # Train ShallowNet
+    emit_log("\n>>> Phase 1/2: Training ShallowNet (2 Hidden Layers) <<<")
     history_shallow, test_metrics_shallow, latents_shallow, labels_test = train_and_evaluate_model(
-        shallow_net, train_loader, val_loader, test_loader, epochs=epochs, lr=lr, device=device
+        shallow_net, train_loader, val_loader, test_loader, epochs=epochs, lr=lr, device=device,
+        progress_callback=progress_callback, log_callback=log_callback
     )
     
     # Train DeepNet
+    emit_log("\n>>> Phase 2/2: Training DeepNet (10 Hidden Layers) <<<")
     history_deep, test_metrics_deep, latents_deep, _ = train_and_evaluate_model(
-        deep_net, train_loader, val_loader, test_loader, epochs=epochs, lr=lr, device=device
+        deep_net, train_loader, val_loader, test_loader, epochs=epochs, lr=lr, device=device,
+        progress_callback=progress_callback, log_callback=log_callback
     )
     
     # Save model weights
     torch.save(shallow_net.state_dict(), "results/shallow_net.pth")
     torch.save(deep_net.state_dict(), "results/deep_net.pth")
-    print("Saved model checkpoints to results/")
+    emit_log("Saved model checkpoints to results/")
     
     # Save latent representations
     np.savez_compressed(
@@ -230,7 +268,7 @@ def run_experiment(num_samples=1600, epochs=25, batch_size=32, lr=0.01):
         latents_deep=latents_deep,
         labels=labels_test
     )
-    print("Saved latent test representations to results/test_embeddings.npz")
+    emit_log("Saved latent test representations to results/test_embeddings.npz")
     
     # Save histories and metrics
     all_histories = {
@@ -247,8 +285,19 @@ def run_experiment(num_samples=1600, epochs=25, batch_size=32, lr=0.01):
     with open("results/test_metrics.json", "w") as f:
         json.dump(all_metrics, f, indent=2)
         
-    print("Saved metrics and training histories to results/")
-    print("\nExperiment Run Complete!")
+    emit_log("Saved metrics and training histories to results/")
+    
+    # Automatically regenerate all analytical plots & summary
+    emit_log("\n>>> Regenerating All Diagnostic Plots & Analysis Summary <<<")
+    try:
+        import analyze
+        analyze.generate_summary()
+        emit_log("All diagnostic figures and metrics summary successfully refreshed in 'results/'!")
+    except Exception as e:
+        emit_log(f"Plot regeneration notice: {e}")
+        
+    emit_log("\n[SUCCESS] Experiment Run Complete!")
+    return all_histories, all_metrics
 
 if __name__ == "__main__":
     run_experiment(num_samples=1600, epochs=25, batch_size=32, lr=0.01)
